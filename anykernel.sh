@@ -127,10 +127,12 @@ is_mounted /vendor_dlkm || \
 strings ${home}/Image 2>/dev/null | grep -E -m1 'Linux version.*#' > ${home}/vertmp
 
 skip_update_flag=false
-[ -f /vendor_dlkm/lib/modules/vertmp ] && \
-	[ "$(cat /vendor_dlkm/lib/modules/vertmp)" == "$(cat ${home}/vertmp)" ] && \
-		skip_update_flag=true
-
+do_backup_flag=false
+if [ -f /vendor_dlkm/lib/modules/vertmp ]; then
+	[ "$(cat /vendor_dlkm/lib/modules/vertmp)" == "$(cat ${home}/vertmp)" ] && skip_update_flag=true
+else
+	do_backup_flag=true
+fi
 umount /vendor_dlkm
 
 # Fix unable to mount image as read-write in recovery
@@ -145,6 +147,30 @@ else
 	mkdir -p $extract_vendor_dlkm_dir
 
 	dd if=/dev/block/mapper/vendor_dlkm${slot} of=${home}/vendor_dlkm.img
+
+	if $do_backup_flag; then
+		ui_print "- It looks like you are installing Melt Kernel for the first time."
+		ui_print "- Next will backup the kernel and vendor_dlkm partitions..."
+
+		backup_package=/sdcard/Melt-restore-kernel-$(date +"%Y%m%d-%H%M%S").zip
+		rm -rf ${home}/tmp
+		mkdir -p ${home}/tmp
+		mv ${home}/_restore_anykernel.sh ${home}/tmp/anykernel.sh
+		cp ${split_img}/kernel ${home}/tmp/Image
+		${bin}/7za a -tzip $backup_package ${home}/META-INF ${bin} ${home}/LICENSE ${home}/tmp/anykernel.sh ${home}/tmp/Image ${home}/vendor_dlkm.img
+		rm -rf ${home}/tmp
+
+		ui_print " "
+		ui_print "- The current kernel and vendor_dlkm have been backedup to:"
+		ui_print "  $backup_package"
+		ui_print "- If you encounter an unexpected situation,"
+		ui_print "  or want to restore the stock kernel,"
+		ui_print "  please flash it in TWRP or some supported apps."
+		ui_print " "
+
+		unset backup_package
+	fi
+
 	ui_print "- Unpacking /vendor_dlkm partition..."
 	vendor_dlkm_is_ext4=false
 	extract_erofs ${home}/vendor_dlkm.img $extract_vendor_dlkm_dir || vendor_dlkm_is_ext4=true
@@ -217,7 +243,7 @@ else
 	unset vendor_dlkm_is_ext4 vendor_dlkm_free_space extract_vendor_dlkm_dir extract_vendor_dlkm_modules_dir blocklist_expr
 fi
 
-unset no_needed_kos skip_update_flag
+unset no_needed_kos skip_update_flag do_backup_flag
 
 # Patch vbmeta
 for vbmeta_blk in /dev/block/bootdevice/by-name/vbmeta${slot} /dev/block/bootdevice/by-name/vbmeta_system${slot}; do

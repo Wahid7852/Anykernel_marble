@@ -144,6 +144,19 @@ extract.erofs, mkfs.erofs:
     Source not required, however, respective source is provided:
     https://github.com/sekaiacg/erofs-utils
 
+7za: LGPLv2
+    7-Zip is free software with open source.
+    The most of the code is under the GNU LGPL license.
+    Some parts of the code are under the BSD 3-clause License.
+    Also there is unRAR license restriction for some parts of the code.
+    Read [7-Zip License](https://www.7-zip.org/license.txt) information.
+
+    You can use 7-Zip on any computer, including a computer in a commercial organization.
+    You don't need to register or pay for 7-Zip.
+
+    Source not required, however, respective source is provided:
+    https://sourceforge.net/projects/p7zip/files/p7zip/16.02/p7zip_16.02_src_all.tar.bz2/download
+
 vbmeta-disable-verification: MIT License
 
     Copyright (c) 2022 LibXZR
