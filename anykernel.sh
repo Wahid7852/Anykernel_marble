@@ -57,6 +57,7 @@ coresight.ko
 cs35l41_dlkm.ko
 f_fs_ipc_log.ko
 focaltech_fts.ko
+icnss2.ko
 nt36xxx-i2c.ko
 nt36xxx-spi.ko
 qca_cld3_qca6750.ko
@@ -98,19 +99,16 @@ mkfs_erofs() {
 is_mounted() { mount | grep -q " $1 "; }
 
 [ -d /vendor_dlkm ] || mkdir /vendor_dlkm
-is_mounted /vendor_dlkm || {
+is_mounted /vendor_dlkm || \
 	mount /vendor_dlkm -o ro || mount /dev/block/mapper/vendor_dlkm${slot} /vendor_dlkm -o ro || \
 		abort "! Failed to mount /vendor_dlkm"
-}
 
 strings ${home}/Image 2>/dev/null | grep -E -m1 'Linux version.*#' > ${home}/vertmp
 
 skip_update_flag=false
-if [ -f /vendor_dlkm/lib/modules/vertmp ]; then
-	if [ "$(cat /vendor_dlkm/lib/modules/vertmp)" == "$(cat ${home}/vertmp)" ]; then
+[ -f /vendor_dlkm/lib/modules/vertmp ] && \
+	[ "$(cat /vendor_dlkm/lib/modules/vertmp)" == "$(cat ${home}/vertmp)" ] && \
 		skip_update_flag=true
-	fi
-fi
 
 umount /vendor_dlkm
 
@@ -147,13 +145,12 @@ else
 				abort "! We have tried all known methods!"
 			}
 
-			${bin}/e2fsck -f -y ${home}/vendor_dlkm.img || \
-				abort "! The vendor_dlkm image failed the e2fsck check!"
+			${bin}/e2fsck -f -y ${home}/vendor_dlkm.img
 			vendor_dlkm_current_size_mb=$(du -bm ${home}/vendor_dlkm.img | awk '{print $1}')
-			vendor_dlkm_target_size_mb="$((vendor_dlkm_current_size_mb + 10))M"
-			${bin}/resize2fs ${home}/vendor_dlkm.img $vendor_dlkm_target_size_mb || \
+			vendor_dlkm_target_size_mb=$((vendor_dlkm_current_size_mb + 10))
+			${bin}/resize2fs ${home}/vendor_dlkm.img "${vendor_dlkm_target_size_mb}M" || \
 				abort "! Failed to resize vendor_dlkm image!"
-			ui_print "- Resized vendor_dlkm.img size: ${vendor_dlkm_target_size_mb}."
+			ui_print "- Resized vendor_dlkm.img size: ${vendor_dlkm_target_size_mb}M."
 			# e2fsck again
 			${bin}/e2fsck -f -y ${home}/vendor_dlkm.img
 
@@ -203,8 +200,12 @@ unset no_needed_kos skip_update_flag
 
 # Patch vbmeta
 for vbmeta_blk in /dev/block/bootdevice/by-name/vbmeta${slot} /dev/block/bootdevice/by-name/vbmeta_system${slot}; do
-    ui_print "- Patching ${vbmeta_blk} ..."
-    ${bin}/vbmeta-disable-verification $vbmeta_blk || abort "! Failed to patching ${vbmeta_blk}!"
+	ui_print "- Patching ${vbmeta_blk} ..."
+	${bin}/vbmeta-disable-verification $vbmeta_blk || {
+		ui_print "! Failed to patching ${vbmeta_blk}!"
+		ui_print "- If the device won't boot after the installation,"
+		ui_print "  please manually disable AVB in TWRP."
+	}
 done
 
 ########## CUSTOM END ##########
