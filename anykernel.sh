@@ -98,6 +98,27 @@ mkfs_erofs() {
 
 is_mounted() { mount | grep -q " $1 "; }
 
+snapshot_not_ready=false
+
+if $BOOTMODE; then
+	ls -1 /dev/block/mapper/ | grep -qE '\-cow$' && snapshot_not_ready=true
+else
+	is_mounted /system && umount /system
+	if [ -f /system/bin/bootctl ]; then
+		if [ "$(/system/bin/bootctl get-snapshot-merge-status)" != "none" ]; then
+			snapshot_not_ready=true
+		fi
+	fi
+fi
+
+if $snapshot_not_ready; then
+	ui_print " "
+	ui_print "Seems like you just installed a rom update."
+	ui_print "Please reboot at least once before attempting to install!"
+	abort "Aborting..."
+fi
+unset snapshot_not_ready
+
 [ -d /vendor_dlkm ] || mkdir /vendor_dlkm
 is_mounted /vendor_dlkm || \
 	mount /vendor_dlkm -o ro || mount /dev/block/mapper/vendor_dlkm${slot} /vendor_dlkm -o ro || \
