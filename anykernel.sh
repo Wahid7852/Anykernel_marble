@@ -101,15 +101,6 @@ is_mounted() { mount | grep -q " $1 "; }
 # Check snapshot status
 # Technical details: https://blog.xzr.moe/archives/30/
 snapshot_status=$(${bin}/snapshotupdater_static dump 2>/dev/null | grep '^Update state:' | awk '{print $3}')
-[ $? == 0 ] || {
-	if ! $BOOTMODE; then
-		is_mounted /system && umount /system
-		if [ -f /system/bin/bootctl ]; then
-			snapshot_status=$(/system/bin/bootctl get-snapshot-merge-status)
-		fi
-	fi
-}
-
 if [ "$snapshot_status" != "none" ]; then
 	ui_print " "
 	ui_print "Seems like you just installed a rom update."
