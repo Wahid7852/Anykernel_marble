@@ -100,7 +100,19 @@ is_mounted() { mount | grep -q " $1 "; }
 
 # Check snapshot status
 # Technical details: https://blog.xzr.moe/archives/30/
+${bin}/snapshotupdater_static dump &>/dev/null
+rc=$?
+if [ "$rc" != 0 ]; then
+	ui_print "Cannot get snapshot status via snapshotupdater_static! rc=$rc."
+	if $BOOTMODE; then
+		ui_print "If you are installing the kernel in an app, try using another app."
+		ui_print "Recommend KernelFlasher:"
+		ui_print "  https://github.com/capntrips/KernelFlasher/releases"
+	fi
+	abort "Aborting..."
+fi
 snapshot_status=$(${bin}/snapshotupdater_static dump 2>/dev/null | grep '^Update state:' | awk '{print $3}')
+ui_print "Current snapshot state: $snapshot_status"
 if [ "$snapshot_status" != "none" ]; then
 	ui_print " "
 	ui_print "Seems like you just installed a rom update."
@@ -110,7 +122,7 @@ if [ "$snapshot_status" != "none" ]; then
 	fi
 	abort "Aborting..."
 fi
-unset snapshot_status 
+unset rc snapshot_status
 
 # Check vendor_dlkm partition status
 [ -d /vendor_dlkm ] || mkdir /vendor_dlkm
