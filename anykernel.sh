@@ -116,9 +116,13 @@ ui_print "Current snapshot state: $snapshot_status"
 if [ "$snapshot_status" != "none" ]; then
 	ui_print " "
 	ui_print "Seems like you just installed a rom update."
-	ui_print "Please reboot at least once before attempting to install!"
 	if [ "$snapshot_status" == "merging" ]; then
-		ui_print "If this error keeps appearing, please use the rom for a while."
+		ui_print "Please use the rom for a while to wait for"
+		ui_print "the system to complete the snapshot merge."
+		ui_print "It's also possible to use the \"Merge Snapshots\" feature"
+		ui_print "in TWRP's Advanced menu to instantly merge snapshots."
+	else
+		ui_print "Please reboot at least once before attempting to install!"
 	fi
 	abort "Aborting..."
 fi
