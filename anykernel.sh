@@ -160,7 +160,9 @@ else
 		ui_print "- It looks like you are installing Melt Kernel for the first time."
 		ui_print "- Next will backup the kernel and vendor_dlkm partitions..."
 
-		backup_package=/sdcard/Melt-restore-kernel-$(date +"%Y%m%d-%H%M%S").zip
+		build_prop=/system/build.prop
+		[ -d /system_root/system ] && build_prop=/system_root/$build_prop
+		backup_package=/sdcard/Melt-restore-kernel-$(file_getprop $build_prop ro.build.version.incremental)-$(date +"%Y%m%d-%H%M%S").zip
 		${bin}/7za a -tzip -bd $backup_package \
 			${home}/META-INF ${bin} ${home}/LICENSE ${home}/_restore_anykernel.sh ${split_img}/kernel ${home}/vendor_dlkm.img
 		${bin}/7za rn -bd $backup_package kernel Image
@@ -175,7 +177,7 @@ else
 		ui_print "  please flash it in TWRP or some supported apps."
 		ui_print " "
 
-		unset backup_package
+		unset build_prop backup_package
 	fi
 
 	ui_print "- Unpacking /vendor_dlkm partition..."
