@@ -176,6 +176,7 @@ else
 		ui_print "  or want to restore the stock kernel,"
 		ui_print "  please flash it in TWRP or some supported apps."
 		ui_print " "
+		touch ${home}/do_backup_flag
 
 		unset build_prop backup_package
 	fi

@@ -510,6 +510,18 @@ debugging;
 ui_print " ";
 restore_env;
 
+if ! $BOOTMODE; then
+  if [ -f ${AKHOME}/do_backup_flag ]; then
+    if [ -f /system/bin/bootctl ]; then
+      /system/bin/bootctl is-slot-marked-successful $(/system/bin/bootctl get-active-boot-slot) || {
+        ui_print "Warning: Please keep the backup package just generated properly!";
+        ui_print "Because it may be LOST after reboot!";
+        sleep 3;
+      };
+    fi;
+  fi;
+fi;
+
 if [ "$(file_getprop anykernel.sh do.cleanup)" == 1 ]; then
   cleanup;
 fi;
