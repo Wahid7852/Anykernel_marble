@@ -147,6 +147,12 @@ else
 fi
 umount /vendor_dlkm
 
+if $skip_update_flag; then
+	case $(basename "$ZIPFILE" .zip) in
+		*-force) skip_update_flag=false;;
+	esac;
+fi
+
 # Fix unable to mount image as read-write in recovery
 $BOOTMODE || setenforce 0
 
