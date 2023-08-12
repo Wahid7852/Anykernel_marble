@@ -108,6 +108,8 @@ if [ "$rc" != 0 ]; then
 		ui_print "If you are installing the kernel in an app, try using another app."
 		ui_print "Recommend KernelFlasher:"
 		ui_print "  https://github.com/capntrips/KernelFlasher/releases"
+	else
+		ui_print "Please try to reboot to system once before installing!"
 	fi
 	abort "Aborting..."
 fi
@@ -122,7 +124,7 @@ if [ "$snapshot_status" != "none" ]; then
 		ui_print "It's also possible to use the \"Merge Snapshots\" feature"
 		ui_print "in TWRP's Advanced menu to instantly merge snapshots."
 	else
-		ui_print "Please reboot at least once before attempting to install!"
+		ui_print "Please try to reboot to system once before installing!"
 	fi
 	abort "Aborting..."
 fi
