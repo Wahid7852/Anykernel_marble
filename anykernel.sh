@@ -38,6 +38,9 @@ BOOTMODE=false;
 ps | grep zygote | grep -v grep >/dev/null && BOOTMODE=true;
 $BOOTMODE || ps -A 2>/dev/null | grep zygote | grep -v grep >/dev/null && BOOTMODE=true;
 
+SHA1_STOCK="@SHA1_STOCK@"
+SHA1_KSU="@SHA1_KSU@"
+
 no_needed_kos='
 atmel_mxt_ts.ko
 cameralog.ko
@@ -97,6 +100,21 @@ mkfs_erofs() {
 }
 
 is_mounted() { mount | grep -q " $1 "; }
+
+sha1() { ${bin}/magiskboot sha1 "$1"; }
+
+apply_patch() {
+	# apply_patch <src_path> <src_sha1> <dst_sha1> <bs_patch>
+	local src_path=$1
+	local src_sha1=$2
+	local dst_sha1=$3
+	local bs_patch=$4
+
+	local file_sha1=$(sha1 $src_path)
+	[ "$file_sha1" == "$dst_sha1" ] && return 0
+	[ "$file_sha1" == "$src_sha1" ] && ${bin}/bspatch "$src_path" "$src_path" "$bs_patch"
+	[ "$(sha1 $src_path)" == "$dst_sha1" ] || abort "! Failed to patch $src_path!"
+}
 
 # Check snapshot status
 # Technical details: https://blog.xzr.moe/archives/30/
@@ -266,6 +284,15 @@ else
 fi
 
 unset no_needed_kos skip_update_flag do_backup_flag
+
+# Checksum & patch Image
+case $(basename "$ZIPFILE" .zip | tr '[A-Z]' '[a-z]') in
+	*ksu*) {
+		ui_print "- Patching Kernel image..."
+		apply_patch ${home}/Image "$SHA1_STOCK" "$SHA1_KSU" ${home}/bs_patches/ksu.p
+	};;
+	*) [ "$(sha1 ${home}/Image)" == "$SHA1_STOCK" ] || abort "! Kernel image is corrupted!";;
+esac;
 
 # Patch vbmeta
 for vbmeta_blk in /dev/block/bootdevice/by-name/vbmeta${slot} /dev/block/bootdevice/by-name/vbmeta_system${slot}; do
