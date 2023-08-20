@@ -132,7 +132,7 @@ def make_single(build_version):
         zip_file = make_zip(
             "META-INF", "tools", "_modules",
             ("anykernel-single.sh", "anykernel.sh"), "_restore_anykernel.sh", "Image", "LICENSE", "banner",
-            exclude=("bspatch", ),
+            exclude=("bspatch", "keycheck"),
         )
     dst_zip_file = local_path(PACKAGE_NAME_SINGLE % build_version)
     file2file(zip_file, dst_zip_file, move=True)

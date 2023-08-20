@@ -41,6 +41,9 @@ $BOOTMODE || ps -A 2>/dev/null | grep zygote | grep -v grep >/dev/null && BOOTMO
 SHA1_STOCK="@SHA1_STOCK@"
 SHA1_KSU="@SHA1_KSU@"
 
+KEYCODE_UP=42
+KEYCODE_DOWN=41
+
 no_needed_kos='
 atmel_mxt_ts.ko
 cameralog.ko
@@ -116,6 +119,42 @@ apply_patch() {
 	[ "$(sha1 $src_path)" == "$dst_sha1" ] || abort "! Failed to patch $src_path!"
 }
 
+get_keycheck_result() {
+	# Default behavior: 
+	# - press Vol+: return true (0)
+	# - press Vol-: return false (1)
+
+	# The first execution responds to the button press event,
+	# the second execution responds to the button release event.
+	${bin}/keycheck; ${bin}/keycheck
+	local r_keycode=$?
+	case $r_keycode in
+		"$KEYCODE_UP") return 0;;
+		"$KEYCODE_DOWN") return 1;;
+		*) abort "! Unknown keycode: $r_keycode"
+	esac
+}
+
+keycode_select() {
+	local prompt_text=$1
+	local r_keycode
+
+	ui_print " "
+	ui_print "# $prompt_text"
+	ui_print "#"
+	ui_print "# Vol+ = Yes, Vol- = No."
+	ui_print "# Please press the key..."
+	get_keycheck_result
+	r_keycode=$?
+	ui_print "#"
+	if [ "$r_keycode" -eq "0" ]; then
+		ui_print "- You chose Yes."
+	else
+		ui_print "- You chose No."
+	fi
+	return $r_keycode
+}
+
 # Check snapshot status
 # Technical details: https://blog.xzr.moe/archives/30/
 ${bin}/snapshotupdater_static dump &>/dev/null
@@ -170,6 +209,15 @@ if $skip_update_flag; then
 		*-force) skip_update_flag=false;;
 	esac
 fi
+
+# KernelSU
+keycode_select "Choose whether to install KernelSU support." && {
+	ui_print " "
+	ui_print "- Patching Kernel image..."
+	apply_patch ${home}/Image "$SHA1_STOCK" "$SHA1_KSU" ${home}/bs_patches/ksu.p
+} || {
+	[ "$(sha1 ${home}/Image)" == "$SHA1_STOCK" ] || abort "! Kernel image is corrupted!"
+}
 
 # Fix unable to mount image as read-write in recovery
 $BOOTMODE || setenforce 0
@@ -284,15 +332,6 @@ else
 fi
 
 unset no_needed_kos skip_update_flag do_backup_flag
-
-# Checksum & patch Image
-case $(basename "$ZIPFILE" .zip | tr '[A-Z]' '[a-z]') in
-	*ksu*) {
-		ui_print "- Patching Kernel image..."
-		apply_patch ${home}/Image "$SHA1_STOCK" "$SHA1_KSU" ${home}/bs_patches/ksu.p
-	};;
-	*) [ "$(sha1 ${home}/Image)" == "$SHA1_STOCK" ] || abort "! Kernel image is corrupted!";;
-esac;
 
 # Patch vbmeta
 for vbmeta_blk in /dev/block/bootdevice/by-name/vbmeta${slot} /dev/block/bootdevice/by-name/vbmeta_system${slot}; do
