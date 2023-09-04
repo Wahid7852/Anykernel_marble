@@ -120,7 +120,7 @@ apply_patch() {
 }
 
 get_keycheck_result() {
-	# Default behavior: 
+	# Default behavior:
 	# - press Vol+: return true (0)
 	# - press Vol-: return false (1)
 
@@ -152,6 +152,7 @@ keycode_select() {
 	else
 		ui_print "- You chose No."
 	fi
+	ui_print " "
 	return $r_keycode
 }
 
@@ -212,7 +213,6 @@ fi
 
 # KernelSU
 keycode_select "Choose whether to install KernelSU support." && {
-	ui_print " "
 	ui_print "- Patching Kernel image..."
 	apply_patch ${home}/Image "$SHA1_STOCK" "$SHA1_KSU" ${home}/bs_patches/ksu.p
 } || {
@@ -234,7 +234,6 @@ else
 		ui_print "- It looks like you are installing Melt Kernel for the first time."
 
 		keycode_select "Backup the current kernel and vendor_dlkm partition?" && {
-			ui_print " "
 			ui_print "- Backing up the kernel and vendor_dlkm partition..."
 
 			build_prop=/system/build.prop
