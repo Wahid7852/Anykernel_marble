@@ -98,6 +98,8 @@ mkfs_erofs() {
 
 is_mounted() { mount | grep -q " $1 "; }
 
+sha1() { ${bin}/magiskboot sha1 "$1"; }
+
 # Check snapshot status
 # Technical details: https://blog.xzr.moe/archives/30/
 ${bin}/snapshotupdater_static dump &>/dev/null
@@ -235,6 +237,9 @@ else
 	fi
 
 	ui_print "- Updating /vendor_dlkm image..."
+	if [ "$(sha1 ${extract_vendor_dlkm_modules_dir}/qti_battery_charger.ko)" == "b5aa013e06e545df50030ec7b03216f41306f4d4" ]; then
+		rm ${home}/_modules/qti_battery_charger.ko
+	fi
 	cp -f ${home}/_modules/*.ko ${extract_vendor_dlkm_modules_dir}/
 	blocklist_expr=$(echo $no_needed_kos | awk '{ printf "-vE \^\("; for (i = 1; i <= NF; i++) { if (i == NF) printf $i; else printf $i "|"; }; printf "\)" }')
 	mv -f ${extract_vendor_dlkm_modules_dir}/modules.load ${extract_vendor_dlkm_modules_dir}/modules.load.old
