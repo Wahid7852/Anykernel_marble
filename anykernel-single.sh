@@ -38,6 +38,9 @@ BOOTMODE=false;
 ps | grep zygote | grep -v grep >/dev/null && BOOTMODE=true;
 $BOOTMODE || ps -A 2>/dev/null | grep zygote | grep -v grep >/dev/null && BOOTMODE=true;
 
+KEYCODE_UP=42
+KEYCODE_DOWN=41
+
 no_needed_kos='
 atmel_mxt_ts.ko
 cameralog.ko
@@ -99,6 +102,42 @@ mkfs_erofs() {
 is_mounted() { mount | grep -q " $1 "; }
 
 sha1() { ${bin}/magiskboot sha1 "$1"; }
+
+get_keycheck_result() {
+	# Default behavior: 
+	# - press Vol+: return true (0)
+	# - press Vol-: return false (1)
+
+	# The first execution responds to the button press event,
+	# the second execution responds to the button release event.
+	${bin}/keycheck; ${bin}/keycheck
+	local r_keycode=$?
+	case $r_keycode in
+		"$KEYCODE_UP") return 0;;
+		"$KEYCODE_DOWN") return 1;;
+		*) abort "! Unknown keycode: $r_keycode"
+	esac
+}
+
+keycode_select() {
+	local prompt_text=$1
+	local r_keycode
+
+	ui_print " "
+	ui_print "# $prompt_text"
+	ui_print "#"
+	ui_print "# Vol+ = Yes, Vol- = No."
+	ui_print "# Please press the key..."
+	get_keycheck_result
+	r_keycode=$?
+	ui_print "#"
+	if [ "$r_keycode" -eq "0" ]; then
+		ui_print "- You chose Yes."
+	else
+		ui_print "- You chose No."
+	fi
+	return $r_keycode
+}
 
 # Check snapshot status
 # Technical details: https://blog.xzr.moe/archives/30/
@@ -168,27 +207,31 @@ else
 	# Backup kernel and vendor_dlkm image
 	if $do_backup_flag; then
 		ui_print "- It looks like you are installing Melt Kernel for the first time."
-		ui_print "- Next will backup the kernel and vendor_dlkm partitions..."
 
-		build_prop=/system/build.prop
-		[ -d /system_root/system ] && build_prop=/system_root/$build_prop
-		backup_package=/sdcard/Melt-restore-kernel-$(file_getprop $build_prop ro.build.version.incremental)-$(date +"%Y%m%d-%H%M%S").zip
-		${bin}/7za a -tzip -bd $backup_package \
-			${home}/META-INF ${bin} ${home}/LICENSE ${home}/_restore_anykernel.sh ${split_img}/kernel ${home}/vendor_dlkm.img
-		${bin}/7za rn -bd $backup_package kernel Image
-		${bin}/7za rn -bd $backup_package _restore_anykernel.sh anykernel.sh
-		sync
+		keycode_select "Backup the current kernel and vendor_dlkm partition?" && {
+			ui_print " "
+			ui_print "- Backing up the kernel and vendor_dlkm partition..."
 
-		ui_print " "
-		ui_print "- The current kernel and vendor_dlkm have been backedup to:"
-		ui_print "  $backup_package"
-		ui_print "- If you encounter an unexpected situation,"
-		ui_print "  or want to restore the stock kernel,"
-		ui_print "  please flash it in TWRP or some supported apps."
-		ui_print " "
-		touch ${home}/do_backup_flag
+			build_prop=/system/build.prop
+			[ -d /system_root/system ] && build_prop=/system_root/$build_prop
+			backup_package=/sdcard/Melt-restore-kernel-$(file_getprop $build_prop ro.build.version.incremental)-$(date +"%Y%m%d-%H%M%S").zip
+			${bin}/7za a -tzip -bd $backup_package \
+				${home}/META-INF ${bin} ${home}/LICENSE ${home}/_restore_anykernel.sh ${split_img}/kernel ${home}/vendor_dlkm.img
+			${bin}/7za rn -bd $backup_package kernel Image
+			${bin}/7za rn -bd $backup_package _restore_anykernel.sh anykernel.sh
+			sync
 
-		unset build_prop backup_package
+			ui_print " "
+			ui_print "- The current kernel and vendor_dlkm have been backedup to:"
+			ui_print "  $backup_package"
+			ui_print "- If you encounter an unexpected situation,"
+			ui_print "  or want to restore the stock kernel,"
+			ui_print "  please flash it in TWRP or some supported apps."
+			ui_print " "
+			touch ${home}/do_backup_flag
+
+			unset build_prop backup_package
+		}
 	fi
 
 	ui_print "- Unpacking /vendor_dlkm partition..."
