@@ -267,6 +267,7 @@ else
 		mount ${home}/vendor_dlkm.img $extract_vendor_dlkm_dir -o ro -t ext4 || \
 			abort "! Unsupported file system!"
 		vendor_dlkm_free_space=$(df -k | grep -E "[[:space:]]$extract_vendor_dlkm_dir\$" | awk '{print $4}')
+		ui_print "- /vendor_dlkm partition free space: $vendor_dlkm_free_space"
 		umount $extract_vendor_dlkm_dir
 
 		[ "$vendor_dlkm_free_space" -gt 10240 ] || {
@@ -274,6 +275,7 @@ else
 			ui_print "- /vendor_dlkm partition does not have enough free space!"
 			ui_print "- Trying to resize..."
 			super_free_space=$(${bin}/lptools_static free | grep '^Free space' | awk '{print $NF}')
+			ui_print "- Super device free space: $super_free_space"
 			[ "$super_free_space" -gt "$((10 * 1024 * 1024))" ] || {
 				ui_print "! Super device does not have enough free space!"
 				abort "! We have tried all known methods!"
