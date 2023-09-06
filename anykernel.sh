@@ -341,16 +341,6 @@ fi
 
 unset no_needed_kos skip_update_flag do_backup_flag
 
-# Patch vbmeta
-for vbmeta_blk in /dev/block/bootdevice/by-name/vbmeta${slot} /dev/block/bootdevice/by-name/vbmeta_system${slot}; do
-	ui_print "- Patching ${vbmeta_blk} ..."
-	${bin}/vbmeta-disable-verification $vbmeta_blk || {
-		ui_print "! Failed to patching ${vbmeta_blk}!"
-		ui_print "- If the device won't boot after the installation,"
-		ui_print "  please manually disable AVB in TWRP."
-	}
-done
-
 write_boot # use flash_boot to skip ramdisk repack, e.g. for devices with init_boot ramdisk
 
 ########## FLASH BOOT & VENDOR_DLKM END ##########
@@ -383,5 +373,16 @@ dump_boot # use split_boot to skip ramdisk unpack, e.g. for devices with init_bo
 write_boot # use flash_boot to skip ramdisk repack, e.g. for devices with init_boot ramdisk
 
 ########## FLASH VENDOR_BOOT END ##########
+
+# Patch vbmeta
+ui_print " "
+for vbmeta_blk in /dev/block/bootdevice/by-name/vbmeta${slot} /dev/block/bootdevice/by-name/vbmeta_system${slot}; do
+	ui_print "- Patching ${vbmeta_blk} ..."
+	${bin}/vbmeta-disable-verification $vbmeta_blk || {
+		ui_print "! Failed to patching ${vbmeta_blk}!"
+		ui_print "- If the device won't boot after the installation,"
+		ui_print "  please manually disable AVB in TWRP."
+	}
+done
 
 ## end boot install
