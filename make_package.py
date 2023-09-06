@@ -114,7 +114,7 @@ def main_multi(build_version):
                     )
             print("Making zip package...")
             zip_file = make_zip(
-                "META-INF", "tools", "_modules", "bs_patches",
+                "META-INF", "tools", "_vendor_boot_modules", "_vendor_dlkm_modules", "bs_patches",
                 "anykernel.sh", "_restore_anykernel.sh", "Image", "LICENSE", "banner",
             )
     finally:
@@ -130,7 +130,7 @@ def make_single(build_version):
     with change_dir(BASE_DIR):
         print("Making zip package...")
         zip_file = make_zip(
-            "META-INF", "tools", "_modules",
+            "META-INF", "tools", "_vendor_boot_modules", "_vendor_dlkm_modules",
             ("anykernel-single.sh", "anykernel.sh"), "_restore_anykernel.sh", "Image", "LICENSE", "banner",
             exclude=("bspatch",),
         )

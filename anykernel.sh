@@ -32,7 +32,7 @@ patch_vbmeta_flag=auto
 
 dump_boot # use split_boot to skip ramdisk unpack, e.g. for devices with init_boot ramdisk
 
-########## CUSTOM START ##########
+########## FLASH BOOT & VENDOR_DLKM START ##########
 
 BOOTMODE=false;
 ps | grep zygote | grep -v grep >/dev/null && BOOTMODE=true;
@@ -307,9 +307,9 @@ else
 
 	ui_print "- Updating /vendor_dlkm image..."
 	if [ "$(sha1 ${extract_vendor_dlkm_modules_dir}/qti_battery_charger.ko)" == "b5aa013e06e545df50030ec7b03216f41306f4d4" ]; then
-		rm ${home}/_modules/qti_battery_charger.ko
+		rm ${home}/_vendor_dlkm_modules/qti_battery_charger.ko
 	fi
-	cp -f ${home}/_modules/*.ko ${extract_vendor_dlkm_modules_dir}/
+	cp -f ${home}/_vendor_dlkm_modules/*.ko ${extract_vendor_dlkm_modules_dir}/
 	blocklist_expr=$(echo $no_needed_kos | awk '{ printf "-vE \^\("; for (i = 1; i <= NF; i++) { if (i == NF) printf $i; else printf $i "|"; }; printf "\)" }')
 	mv -f ${extract_vendor_dlkm_modules_dir}/modules.load ${extract_vendor_dlkm_modules_dir}/modules.load.old
 	cat ${extract_vendor_dlkm_modules_dir}/modules.load.old | grep $blocklist_expr > ${extract_vendor_dlkm_modules_dir}/modules.load
@@ -351,7 +351,37 @@ for vbmeta_blk in /dev/block/bootdevice/by-name/vbmeta${slot} /dev/block/bootdev
 	}
 done
 
-########## CUSTOM END ##########
+write_boot # use flash_boot to skip ramdisk repack, e.g. for devices with init_boot ramdisk
+
+########## FLASH BOOT & VENDOR_DLKM END ##########
+
+# Remove files no longer needed to avoid flashing again.
+rm ${home}/Image
+rm ${home}/boot.img
+rm ${home}/boot-new.img
+rm ${home}/vendor_dlkm.img
+
+########## FLASH VENDOR_BOOT START ##########
+
+## vendor_boot shell variables
+block=vendor_boot
+is_slot_device=1
+ramdisk_compression=auto
+patch_vbmeta_flag=auto
+
+# reset for vendor_boot patching
+reset_ak
+
+# Put the module files in the vendor_boot partition to be replaced in ${home}/ramdisk/lib/modules,
+# and AK3 will automatically process them.
+mkdir -p ${home}/ramdisk/lib/modules
+cp ${home}/_vendor_boot_modules/*.ko ${home}/ramdisk/lib/modules/
+
+# vendor_boot install
+dump_boot # use split_boot to skip ramdisk unpack, e.g. for devices with init_boot ramdisk
 
 write_boot # use flash_boot to skip ramdisk repack, e.g. for devices with init_boot ramdisk
+
+########## FLASH VENDOR_BOOT END ##########
+
 ## end boot install
