@@ -253,12 +253,6 @@ else
 			# Resize vendor_dlkm image
 			ui_print "- /vendor_dlkm partition does not have enough free space!"
 			ui_print "- Trying to resize..."
-			super_free_space=$(${bin}/lptools_static free | grep '^Free space' | awk '{print $NF}')
-			ui_print "- Super device free space: $super_free_space"
-			[ "$super_free_space" -gt "$((10 * 1024 * 1024))" ] || {
-				ui_print "! Super device does not have enough free space!"
-				abort "! We have tried all known methods!"
-			}
 
 			${bin}/e2fsck -f -y ${home}/vendor_dlkm.img
 			vendor_dlkm_current_size_mb=$(du -bm ${home}/vendor_dlkm.img | awk '{print $1}')
@@ -269,7 +263,7 @@ else
 			# e2fsck again
 			${bin}/e2fsck -f -y ${home}/vendor_dlkm.img
 
-			unset super_free_space vendor_dlkm_current_size_mb vendor_dlkm_target_size_mb
+			unset vendor_dlkm_current_size_mb vendor_dlkm_target_size_mb
 		}
 
 		ui_print "- Trying to mount vendor_dlkm image as read-write..."
