@@ -210,7 +210,7 @@ if [ $((magisk_patched & 3)) -eq 1 ]; then
 		abort "! Magisk detected! so kernel with KernelSU support cannot be installed!"
 	}
 fi
-unset magisk_patched
+export magisk_patched
 
 # Fix unable to mount image as read-write in recovery
 $BOOTMODE || setenforce 0

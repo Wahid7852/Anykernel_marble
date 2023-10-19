@@ -218,7 +218,7 @@ repack_ramdisk() {
   [ $? != 0 ] && packfail=1;
 
   cd $home;
-  if [ ! "$no_magisk_check" ]; then
+  if [ ! "$no_magisk_check" ] && [ ! "$magisk_patched" ]; then
     $bin/magiskboot cpio ramdisk-new.cpio test;
     magisk_patched=$?;
   fi;

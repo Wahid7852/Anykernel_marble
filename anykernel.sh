@@ -235,7 +235,8 @@ fi
 $install_ksu_flag || {
 	[ "$(sha1 ${home}/Image)" == "$SHA1_STOCK" ] || abort "! Kernel image is corrupted!"
 }
-unset magisk_patched install_ksu_flag
+export magisk_patched
+unset install_ksu_flag
 
 # Fix unable to mount image as read-write in recovery
 $BOOTMODE || setenforce 0
