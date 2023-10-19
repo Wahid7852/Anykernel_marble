@@ -36,10 +36,6 @@ dump_boot # use split_boot to skip ramdisk unpack, e.g. for devices with init_bo
 
 ########## FLASH BOOT & VENDOR_DLKM START ##########
 
-BOOTMODE=false;
-ps | grep zygote | grep -v grep >/dev/null && BOOTMODE=true;
-$BOOTMODE || ps -A 2>/dev/null | grep zygote | grep -v grep >/dev/null && BOOTMODE=true;
-
 KEYCODE_UP=42
 KEYCODE_DOWN=41
 
