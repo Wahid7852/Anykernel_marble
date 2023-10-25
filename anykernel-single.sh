@@ -201,17 +201,6 @@ if $skip_update_flag; then
 	esac
 fi
 
-# If the user has installed Magisk, and the new kernel has KernelSU support:
-[ -f ${split_img}/ramdisk.cpio ] || abort "! Cannot found ramdisk.cpio!"
-${bin}/magiskboot cpio ${split_img}/ramdisk.cpio test
-magisk_patched=$?
-if [ $((magisk_patched & 3)) -eq 1 ]; then
-	strings ${home}/Image 2>/dev/null | grep -q -E '^/data/adb/ksud$' && {
-		abort "! Magisk detected! so kernel with KernelSU support cannot be installed!"
-	}
-fi
-export magisk_patched
-
 # Fix unable to mount image as read-write in recovery
 $BOOTMODE || setenforce 0
 
