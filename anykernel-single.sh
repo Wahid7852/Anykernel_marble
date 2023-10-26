@@ -2,7 +2,7 @@
 ## osm0sis @ xda-developers
 
 ### AnyKernel setup
-# begin properties
+# global properties
 properties() { '
 kernel.string=Melt Kernel by Pzqqt
 do.devicecheck=1
@@ -17,7 +17,9 @@ device.name4=
 device.name5=
 supported.versions=
 supported.patchlevels=
+supported.vendorpatchlevels=
 '; } # end properties
+
 
 ### AnyKernel install
 
