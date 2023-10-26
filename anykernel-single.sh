@@ -174,6 +174,14 @@ if [ "$snapshot_status" != "none" ]; then
 fi
 unset rc snapshot_status
 
+# Check super device size
+block_device_size=$(blockdev --getsize64 /dev/block/by-name/super) || \
+	abort "! Failed to get super block device size!"
+ui_print "Super block device size: $block_device_size"
+[ "$block_device_size" == "9663676416" ] || \
+	abort "! Super block device size mismatch!"
+unset block_device_size
+
 # Check vendor_dlkm partition status
 [ -d /vendor_dlkm ] || mkdir /vendor_dlkm
 is_mounted /vendor_dlkm || \
