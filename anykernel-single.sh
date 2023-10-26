@@ -219,25 +219,30 @@ else
 	if $do_backup_flag; then
 		ui_print "- It looks like you are installing Melt Kernel for the first time."
 
-		keycode_select "Backup the current kernel and vendor_dlkm partition?" && {
-			ui_print "- Backing up the kernel and vendor_dlkm partition..."
+		keycode_select "Backup the current kernel?" && {
+			ui_print "- Backing up kernel, vendor_boot, and vendor_dlkm partition..."
 
 			build_prop=/system/build.prop
 			[ -d /system_root/system ] && build_prop=/system_root/$build_prop
 			backup_package=/sdcard/Melt-restore-kernel-$(file_getprop $build_prop ro.build.version.incremental)-$(date +"%Y%m%d-%H%M%S").zip
+
+			dd if=/dev/block/bootdevice/by-name/vendor_boot${slot} of=${home}/vendor_boot.img
+
 			${bin}/7za a -tzip -bd $backup_package \
-				${home}/META-INF ${bin} ${home}/LICENSE ${home}/_restore_anykernel.sh ${split_img}/kernel ${home}/vendor_dlkm.img
+				${home}/META-INF ${bin} ${home}/LICENSE ${home}/_restore_anykernel.sh \
+				${split_img}/kernel ${home}/vendor_dlkm.img ${home}/vendor_boot.img
 			${bin}/7za rn -bd $backup_package kernel Image
 			${bin}/7za rn -bd $backup_package _restore_anykernel.sh anykernel.sh
 			sync
 
 			ui_print " "
-			ui_print "- The current kernel and vendor_dlkm have been backedup to:"
+			ui_print "- The current kernel, vendor_boot, vendor_dlkm have been backedup to:"
 			ui_print "  $backup_package"
 			ui_print "- If you encounter an unexpected situation,"
 			ui_print "  or want to restore the stock kernel,"
 			ui_print "  please flash it in TWRP or some supported apps."
 			ui_print " "
+			rm ${home}/vendor_boot.img
 			touch ${home}/do_backup_flag
 
 			unset build_prop backup_package
