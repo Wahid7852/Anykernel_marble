@@ -222,12 +222,24 @@ if $skip_update_flag; then
 fi
 
 # KernelSU
-keycode_select "Choose whether to install KernelSU support." && {
-	ui_print "- Patching Kernel image..."
-	apply_patch ${home}/Image "$SHA1_STOCK" "$SHA1_KSU" ${home}/bs_patches/ksu.p
-} || {
+install_ksu_flag=false
+[ -f ${split_img}/ramdisk.cpio ] || abort "! Cannot found ramdisk.cpio!"
+${bin}/magiskboot cpio ${split_img}/ramdisk.cpio test
+magisk_patched=$?
+if [ $((magisk_patched & 3)) -eq 1 ]; then
+	ui_print " "
+	ui_print "- Magisk detected! so KernelSU support is not allowed to be installed."
+else
+	keycode_select "Choose whether to install KernelSU support." && {
+		ui_print "- Patching Kernel image..."
+		apply_patch ${home}/Image "$SHA1_STOCK" "$SHA1_KSU" ${home}/bs_patches/ksu.p
+		install_ksu_flag=true
+	}
+fi
+$install_ksu_flag || {
 	[ "$(sha1 ${home}/Image)" == "$SHA1_STOCK" ] || abort "! Kernel image is corrupted!"
 }
+unset magisk_patched install_ksu_flag
 
 # Fix unable to mount image as read-write in recovery
 $BOOTMODE || setenforce 0
