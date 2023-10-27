@@ -222,16 +222,18 @@ install_ksu_flag=false
 [ -f ${split_img}/ramdisk.cpio ] || abort "! Cannot found ramdisk.cpio!"
 ${bin}/magiskboot cpio ${split_img}/ramdisk.cpio test
 magisk_patched=$?
-if [ $((magisk_patched & 3)) -eq 1 ]; then
-	ui_print " "
-	ui_print "- Magisk detected! so KernelSU support is not allowed to be installed."
-else
-	keycode_select "Choose whether to install KernelSU support." && {
-		ui_print "- Patching Kernel image..."
-		apply_patch ${home}/Image "$SHA1_STOCK" "$SHA1_KSU" ${home}/bs_patches/ksu.p
-		install_ksu_flag=true
-	}
-fi
+keycode_select "Choose whether to install KernelSU support." && {
+	if [ $((magisk_patched & 3)) -eq 1 ]; then
+		ui_print "- Magisk detected!"
+		ui_print "- We don't recommend using Magisk and KernelSU at the same time!"
+		ui_print "- If any problems occur, it's your own responsibility!"
+		ui_print " "
+		sleep 3
+	fi
+	ui_print "- Patching Kernel image..."
+	apply_patch ${home}/Image "$SHA1_STOCK" "$SHA1_KSU" ${home}/bs_patches/ksu.p
+	install_ksu_flag=true
+}
 $install_ksu_flag || {
 	[ "$(sha1 ${home}/Image)" == "$SHA1_STOCK" ] || abort "! Kernel image is corrupted!"
 }
