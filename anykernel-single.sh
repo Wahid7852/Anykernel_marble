@@ -39,43 +39,6 @@ dump_boot # use split_boot to skip ramdisk unpack, e.g. for devices with init_bo
 KEYCODE_UP=42
 KEYCODE_DOWN=41
 
-no_needed_kos='
-atmel_mxt_ts.ko
-cameralog.ko
-coresight-csr.ko
-coresight-cti.ko
-coresight-dummy.ko
-coresight-funnel.ko
-coresight-hwevent.ko
-coresight-remote-etm.ko
-coresight-replicator.ko
-coresight-stm.ko
-coresight-tgu.ko
-coresight-tmc.ko
-coresight-tpda.ko
-coresight-tpdm.ko
-coresight.ko
-cs35l41_dlkm.ko
-f_fs_ipc_log.ko
-focaltech_fts.ko
-icnss2.ko
-nt36xxx-i2c.ko
-nt36xxx-spi.ko
-qca_cld3_qca6750.ko
-qcom-cpufreq-hw-debug.ko
-qcom_iommu_debug.ko
-qti_battery_debug.ko
-rdbg.ko
-spmi-glink-debug.ko
-spmi-pmic-arb-debug.ko
-stm_console.ko
-stm_core.ko
-stm_ftrace.ko
-stm_p_basic.ko
-stm_p_ost.ko
-synaptics_dsx.ko
-'
-
 extract_erofs() {
 	local img_file=$1
 	local out_dir=$2
@@ -303,28 +266,22 @@ else
 
 	ui_print "- Updating /vendor_dlkm image..."
 	if [ "$(sha1 ${extract_vendor_dlkm_modules_dir}/qti_battery_charger.ko)" == "b5aa013e06e545df50030ec7b03216f41306f4d4" ]; then
-		rm ${home}/_vendor_dlkm_modules/qti_battery_charger.ko
+		cp -f ${extract_vendor_dlkm_modules_dir}/qti_battery_charger.ko ${home}/_vendor_dlkm_modules/qti_battery_charger.ko
 	fi
-	cp -f ${home}/_vendor_dlkm_modules/*.ko ${extract_vendor_dlkm_modules_dir}/
-	blocklist_expr=$(echo $no_needed_kos | awk '{ printf "-vE \^\("; for (i = 1; i <= NF; i++) { if (i == NF) printf $i; else printf $i "|"; }; printf "\)" }')
-	mv -f ${extract_vendor_dlkm_modules_dir}/modules.load ${extract_vendor_dlkm_modules_dir}/modules.load.old
-	cat ${extract_vendor_dlkm_modules_dir}/modules.load.old | grep $blocklist_expr > ${extract_vendor_dlkm_modules_dir}/modules.load
-	rm -f ${extract_vendor_dlkm_modules_dir}/modules.load.old
-	for f in $no_needed_kos; do
-		rm -f ${extract_vendor_dlkm_modules_dir}/$f
-	done
-	cp -f ${home}/vertmp ${extract_vendor_dlkm_modules_dir}/vertmp
+	rm -f ${extract_vendor_dlkm_modules_dir}/*
+	cp ${home}/_vendor_dlkm_modules/* ${extract_vendor_dlkm_modules_dir}/
+	cp ${home}/vertmp ${extract_vendor_dlkm_modules_dir}/vertmp
 	sync
 
 	if $vendor_dlkm_is_ext4; then
-		set_perm 0 0 0644 ${extract_vendor_dlkm_modules_dir}/vertmp
-		chcon u:object_r:vendor_file:s0 ${extract_vendor_dlkm_modules_dir}/vertmp
+		set_perm 0 0 0644 ${extract_vendor_dlkm_modules_dir}/*
+		chcon u:object_r:vendor_file:s0 ${extract_vendor_dlkm_modules_dir}/*
 		umount $extract_vendor_dlkm_dir
 	else
-		cat ${extract_vendor_dlkm_dir}/config/vendor_dlkm_fs_config | grep -q 'lib/modules/vertmp' || \
-			echo 'vendor_dlkm/lib/modules/vertmp 0 0 0644' >> ${extract_vendor_dlkm_dir}/config/vendor_dlkm_fs_config
-		cat ${extract_vendor_dlkm_dir}/config/vendor_dlkm_file_contexts | grep -q 'lib/modules/vertmp' || \
-			echo '/vendor_dlkm/lib/modules/vertmp u:object_r:vendor_file:s0' >> ${extract_vendor_dlkm_dir}/config/vendor_dlkm_file_contexts
+		for f in $(ls -1 $extract_vendor_dlkm_modules_dir); do
+			echo "vendor_dlkm/lib/modules/$f 0 0 0644" >> ${extract_vendor_dlkm_dir}/config/vendor_dlkm_fs_config
+		done
+		echo '/vendor_dlkm/lib/modules/.+ u:object_r:vendor_file:s0' >> ${extract_vendor_dlkm_dir}/config/vendor_dlkm_file_contexts
 		ui_print "- Repacking /vendor_dlkm image..."
 		rm -f ${home}/vendor_dlkm.img
 		mkfs_erofs ${extract_vendor_dlkm_dir}/vendor_dlkm ${home}/vendor_dlkm.img || \
@@ -358,13 +315,13 @@ patch_vbmeta_flag=auto
 # reset for vendor_boot patching
 reset_ak
 
-# Put the module files in the vendor_boot partition to be replaced in ${home}/ramdisk/lib/modules,
-# and AK3 will automatically process them.
-mkdir -p ${home}/ramdisk/lib/modules
-cp ${home}/_vendor_boot_modules/*.ko ${home}/ramdisk/lib/modules/
-
 # vendor_boot install
 dump_boot # use split_boot to skip ramdisk unpack, e.g. for devices with init_boot ramdisk
+
+vendor_boot_modules_dir=${ramdisk}/lib/modules
+rm ${vendor_boot_modules_dir}/*
+cp ${home}/_vendor_boot_modules/* ${vendor_boot_modules_dir}/
+set_perm 0 0 0644 ${vendor_boot_modules_dir}/*
 
 write_boot # use flash_boot to skip ramdisk repack, e.g. for devices with init_boot ramdisk
 
