@@ -135,11 +135,14 @@ unset rc snapshot_status
 
 # Check super device size
 block_device_size=$(blockdev --getsize64 /dev/block/by-name/super) || \
-	abort "! Failed to get super block device size!"
-ui_print "Super block device size: $block_device_size"
-[ "$block_device_size" == "9663676416" ] || \
+	abort "! Failed to get super block device size (by blockdev)!"
+ui_print "Super block device size (read by blockdev): $block_device_size"
+block_device_size_lp=$(${bin}/lpdump 2>/dev/null | grep -E 'Size: [[:digit:]]+ bytes$' | head -n1 | awk '{print $2}') || \
+	abort "! Failed to get super block device size (by lpdump)!"
+ui_print "Super block device size (read by lpdump): $block_device_size_lp"
+[ "$block_device_size" == "9663676416" ] && [ "$block_device_size_lp" == "9663676416" ] || \
 	abort "! Super block device size mismatch!"
-unset block_device_size
+unset block_device_size block_device_size_lp
 
 # Check vendor_dlkm partition status
 [ -d /vendor_dlkm ] || mkdir /vendor_dlkm
