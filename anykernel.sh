@@ -4,7 +4,7 @@
 ### AnyKernel setup
 # global properties
 properties() { '
-kernel.string=Melt Kernel by Pzqqt
+kernel.string=Nova by Abdul7852
 do.devicecheck=1
 do.modules=0
 do.systemless=1
